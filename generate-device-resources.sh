@@ -6,42 +6,28 @@ ASSETS_DIR="$SCRIPT_DIR/assets"
 BASE_RES="$SCRIPT_DIR/resources/drawables/drawables.xml"
 
 declare -a LINK_NAMES=(
-  "connecting_image.png trigger_image.png"
   "launcher_icon.png"
-  "scan_icon.png"
 )
 
 declare -A LINK_TO_ASSET_BASE=(
-  ["connecting_image.png"]="connecting_image"
-  ["trigger_image.png"]="trigger_image"
-  ["launcher_icon.png"]="connecting_image"
-  ["scan_icon.png"]="connecting_image"
+  ["launcher_icon.png"]="launcher_icon"
 )
 
-BLACK_BG_SIZES=(
-  "400x400"
-  "250x250"
-  "200x200"
-  "150x150"
-)
-
-# launcher_icon (middle dimension) derived from:
+# launcher_icon (first dimension) derived from:
 # Garmin/ConnectIQ/Devices/<device>/compiler.json launcherIcon
-# scan_icon (last dimension) derived from:
-# Garmin/ConnectIQ/Devices/<device>/simulator.json menu2->items->icons
 read -r -d '' INPUT_DATA << EOM
-edge530 200x200 35x35 24x24
-edge540 150x150 35x35 41x58
-edge550 250x250 56x56 70x100
-edge830 150x150 35x35 24x24
-edge840 150x150 35x35 41x58
-edge850 250x250 56x56 70x100
-edge1030 250x250 36x36 24x24
-edge1030plus 250x250 36x36 24x24
-edge1040 250x250 40x40 24x24
-edge1050 400x400 68x68 80x118
-edgeexplore2 200x200 36x36 24x24
-edgemtb 150x150 36x36 40x66
+edge530 35x35
+edge540 35x35
+edge550 56x56
+edge830 35x35
+edge840 35x35
+edge850 56x56
+edge1030 36x36
+edge1030plus 36x36
+edge1040 40x40
+edge1050 68x68
+edgeexplore2 36x36
+edgemtb 36x36
 EOM
 
 generate_image()
@@ -51,14 +37,6 @@ generate_image()
   local basename="${input%.*}"
   local output="${ASSETS_DIR}/${basename}-${size}.png"
 
-  local apply_bg="false"
-  for bg_size in "${BLACK_BG_SIZES[@]}"; do
-    if [[ "$size" == "$bg_size" ]]; then
-      apply_bg="true"
-      break
-    fi
-  done
-
   if [[ ! -f "$ASSETS_DIR/$input" ]]; then
     echo "  Error: Source file '$ASSETS_DIR/$input' not found" >&2
     return 1
@@ -66,16 +44,10 @@ generate_image()
 
   echo "  Generating $output"
 
-  if [[ "$apply_bg" == "true" ]]; then
-    convert "$ASSETS_DIR/$input" -background black -flatten \
-      -resize "$size" -gravity center -extent "$size" \
-      -strip "$output"
-  else
-    convert "$ASSETS_DIR/$input" -background none \
-      -brightness-contrast 15x25 \
-      -resize "$size" -gravity center -extent "$size" \
-      -strip "$output"
-  fi
+  convert "$ASSETS_DIR/$input" -background none \
+    -brightness-contrast 15x25 \
+    -resize "$size" -gravity center -extent "$size" \
+    -strip "$output"
 }
 
 while read -r line; do

@@ -4,30 +4,6 @@ using Toybox.WatchUi;
 using Toybox.Timer;
 using Toybox.BluetoothLowEnergy as Ble;
 
-class MainViewInputDelegate extends WatchUi.BehaviorDelegate
-{
-    private var _app as App;
-
-    public function initialize(app as App)
-    {
-        WatchUi.BehaviorDelegate.initialize();
-        _app = app;
-    }
-
-    // Buttons
-    public function onSelect() as Lang.Boolean
-    {
-        _app.forceScan();
-        return true;
-    }
-
-    // Touch screen
-    public function onScan() as Void
-    {
-        _app.forceScan();
-    }
-}
-
 class App extends Application.AppBase
 {
     const RECONNECTION_DELAY = 1000;
@@ -47,11 +23,10 @@ class App extends Application.AppBase
 
     private var _deviceHandle as Pinion.DeviceHandle? = null;
 
-    private var _mainView as MainView = new MainView(self);
-    private var _mainViewInputDelegate as MainViewInputDelegate = new MainViewInputDelegate(self);
+    private var _pinionDataField as PinionDataField = new PinionDataField(self);
 
-    private var _retryTimer as Timer.Timer = new Timer.Timer();
-    private var _numTimeouts as Lang.Number = 0;
+    private var _retryTimer as Timer.Timer or Pinion.DataFieldTimer = Pinion.createTimer();
+    private var _batteryLevelTimer as Timer.Timer or Pinion.DataFieldTimer = Pinion.createTimer();
 
     private function pinionInterface() as Pinion.AbstractInterface
     {
@@ -90,8 +65,6 @@ class App extends Application.AppBase
         case CONNECTED:     Debug.log("onStateChanged CONNECTED");  break;
         case STOPPING:      Debug.log("onStateChanged STOPPING");   break;
         }
-
-        _mainView.onAppStateChanged(_state);
     }
 
     public function updateState() as Void
@@ -119,7 +92,6 @@ class App extends Application.AppBase
                 Debug.error("In CONNECTING state with no device handle");
             }
 
-            _mainView.onConnecting(_deviceHandle as Pinion.DeviceHandle);
             var connectResult = pinionInterface().connect(_deviceHandle as Pinion.DeviceHandle);
             if(!connectResult)
             {
@@ -135,6 +107,11 @@ class App extends Application.AppBase
         case STOPPING:
             // NO-OP
             break;
+        }
+
+        if(state != CONNECTED)
+        {
+            _pinionDataField.reset();
         }
     }
 
@@ -163,14 +140,30 @@ class App extends Application.AppBase
             return;
         }
 
-        exit();
+        setState(STOPPING);
+        _batteryLevelTimer.stop();
+        pinionInterface().disconnect();
+        store();
 
         Debug.log("----- Application Stop -----");
     }
 
     public function getInitialView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates]
     {
-        return [_mainView, _mainViewInputDelegate];
+        return [_pinionDataField];
+    }
+
+    public function getSettingsView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] or Null
+    {
+        var settingsView = new SettingsView(self);
+        var settingsViewInputDelegate = new SettingsViewInputDelegate(settingsView);
+
+        return [settingsView, settingsViewInputDelegate];
+    }
+
+    public function _readBatteryLevel() as Void
+    {
+        readParameter(Pinion.BATTERY_LEVEL);
     }
 
     public function onScanStateChanged(scanState as Pinion.ScanState) as Void
@@ -182,8 +175,10 @@ class App extends Application.AppBase
     {
         Debug.log("PinionDelegate.onConnected");
 
-        _numTimeouts = 0;
         setState(CONNECTED);
+        readParameter(Pinion.CURRENT_GEAR);
+        readParameter(Pinion.BATTERY_LEVEL);
+        _batteryLevelTimer.start(method(:_readBatteryLevel), 60000, true);
     }
 
     public function _attemptReconnection() as Void
@@ -196,6 +191,8 @@ class App extends Application.AppBase
     {
         Debug.log("PinionDelegate.onDisconnected");
 
+        _batteryLevelTimer.stop();
+
         if(_state != STOPPING)
         {
             _retryTimer.start(method(:_attemptReconnection), RECONNECTION_DELAY, false);
@@ -206,29 +203,50 @@ class App extends Application.AppBase
     {
         Debug.log("PinionDelegate.onConnectionTimeout");
 
-        _numTimeouts++;
-
         _attemptReconnection();
-        _mainView.onConnectionTimeout();
     }
 
     public function onFoundDevicesChanged(foundDevices as Lang.Array<Pinion.DeviceHandle>) as Void
     {
-        _mainView.onFoundDevicesChanged(foundDevices);
+        var maxRssi = -1000.0;
+        var selectedIndex = -1;
+
+        // Find strongest advertising device
+        for(var i = 0; i < foundDevices.size(); i++)
+        {
+            var foundDevice = foundDevices[i];
+            var rssi = foundDevice.rssi();
+
+            if(rssi > maxRssi)
+            {
+                maxRssi = rssi;
+                selectedIndex = i;
+            }
+        }
+
+        if(selectedIndex >= 0)
+        {
+            selectDevice(foundDevices[selectedIndex]);
+        }
     }
 
     public function onCurrentGearChanged(currentGear as Lang.Number) as Void
     {
         Debug.log("onCurrentGearChanged(" + currentGear + ")");
 
-        _mainView.onCurrentGearChanged(currentGear);
+        _pinionDataField.setCurrentGear(currentGear);
     }
 
     public function onParameterRead(parameter as Pinion.ParameterType, value as Lang.Number) as Void
     {
         Debug.log("onParameterRead(" + Pinion.stringForParameter(parameter) + ", " + value + ")");
 
-        _mainView.onParameterRead(parameter, value);
+        switch(parameter)
+        {
+            case Pinion.CURRENT_GEAR:   _pinionDataField.setCurrentGear(value); break;
+            case Pinion.BATTERY_LEVEL:  _pinionDataField.setBatteryLevel(value); break;
+            default: break;
+        }
     }
 
     public function onParameterWrite(parameter as Pinion.ParameterType, value as Lang.Number) as Void
@@ -239,7 +257,6 @@ class App extends Application.AppBase
     public function selectDevice(deviceHandle as Pinion.DeviceHandle) as Void
     {
         _deviceHandle = deviceHandle;
-        _numTimeouts = 0;
         updateState();
         store();
     }
@@ -254,22 +271,7 @@ class App extends Application.AppBase
         pinionInterface().write(parameter, value);
     }
 
-    public function forceScan() as Void
-    {
-        if(_numTimeouts > 0)
-        {
-            unstore();
-            disconnect();
-            updateState();
-        }
-    }
-
-    public function disconnect() as Void
-    {
-        pinionInterface().disconnect();
-    }
-
-    private function activityKey(key as Application.PropertyKeyType) as Application.PropertyKeyType
+    public function activityKey(key as Application.PropertyKeyType) as Application.PropertyKeyType
     {
         var profileName = Activity.getProfileInfo().name;
         return profileName + "." + key;
@@ -302,15 +304,36 @@ class App extends Application.AppBase
         _deviceHandle = null;
     }
 
-    public function exit() as Void
+    public function unpair() as Void
     {
-        setState(STOPPING);
-        pinionInterface().disconnect();
-        store();
-    }
-}
+        Debug.log("App.unpair");
 
-function getApp() as App
-{
-    return Application.getApp() as App;
+        unstore();
+
+        if(_state == CONNECTED)
+        {
+            _batteryLevelTimer.stop();
+            pinionInterface().disconnect();
+        }
+
+        updateState();
+    }
+
+    public function update() as Void
+    {
+        if(_pinionInterface != null)
+        {
+            _pinionInterface.update();
+        }
+
+        if(_retryTimer has :update)
+        {
+            _retryTimer.update();
+        }
+
+        if(_batteryLevelTimer has :update)
+        {
+            _batteryLevelTimer.update();
+        }
+    }
 }

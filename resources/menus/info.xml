@@ -1,6 +1,0 @@
-<menu2 id="InfoMenu" title="@Strings.InfoMenuTitle">
-  <menu-item id="id_hardware_version" label="@Strings.HardwareVersion"></menu-item>
-  <menu-item id="id_serial_number" label="@Strings.SerialNumber"></menu-item>
-  <menu-item id="id_bootloader_version" label="@Strings.BootloaderVersion"></menu-item>
-  <menu-item id="id_firmware_version" label="@Strings.FirmwareVersion"></menu-item>
-</menu2>
