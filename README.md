@@ -1,7 +1,3 @@
-# Garmin App for Pinion Smart.Shift Settings
+# Garmin Data Field for Pinion Smart.Shift
 
-This is a ConnectIQ widget for changing the settings on a Pinion Smart.Shift Gearbox.
-
-![Connecting](https://timang.us/assets/bikes/pinion-garmin-app-3.png) ![Main Menu](https://timang.us/assets/bikes/pinion-garmin-app-5.png)
-
-Read more about it on my blog [here](https://timang.us/2025-08-09-pinion-garmin-settings/).
+This is a ConnectIQ data field for displaying the current gear and battery on a Pinion Smart.Shift Gearbox.
