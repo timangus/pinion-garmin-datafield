@@ -18,7 +18,7 @@ class PinionDataField extends WatchUi.SimpleDataField
         SimpleDataField.initialize();
 
         _app = app;
-        label = Application.loadResource(Rez.Strings.Pinion) as Lang.String;
+        label = Application.loadResource(Rez.Strings.DataFieldLabel) as Lang.String;
     }
 
     public function compute(info as Activity.Info) as Lang.Numeric or Time.Duration or Lang.String or Null

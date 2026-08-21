@@ -1,7 +1,7 @@
 <strings>
     <string id="AppName">Smart.Shift DataField</string>
     <string id="Settings">Smart.Shift DataField Settings</string>
-    <string id="Pinion">Pinion</string>
+    <string id="DataFieldLabel">PINION</string>
 
     <string id="Unpair">Unpair from Gearbox</string>
     <string id="Disconnected">Disconnected</string>
