@@ -150,21 +150,21 @@ class PinionDataField extends WatchUi.DataField
     }
 
     private function drawBattery(dc as Graphics.Dc,
-        b as Rect, color as Graphics.ColorValue) as Void
+        rect as Rect, color as Graphics.ColorValue) as Void
     {
         var infillColor = (color == Graphics.COLOR_BLACK) ?
             Graphics.COLOR_WHITE : Graphics.COLOR_BLACK;
-        var lineWidth = b.w * 0.04;
+        var lineWidth = rect.w * 0.04;
         var cornerRadius = lineWidth;
         var blockGap = lineWidth * 0.75;
         var terminalWidth = lineWidth;
-        var terminalHeight = b.h / 2.5;
+        var terminalHeight = rect.h / 2.5;
 
-        var bodyWidth = b.w - terminalWidth;
+        var bodyWidth = rect.w - terminalWidth;
         var levelFullWidth = bodyWidth - ((lineWidth + blockGap) * 2.0);
         var levelWidth = (bodyWidth - ((lineWidth + blockGap) * 2.0)) * (_batteryLevel / 10000.0);
         levelWidth = levelWidth > levelFullWidth ? levelFullWidth : levelWidth;
-        var levelHeight = b.h - ((lineWidth + blockGap) * 2.0);
+        var levelHeight = rect.h - ((lineWidth + blockGap) * 2.0);
         var levelColor =
             _batteryLevel < 1000 && (Time.now().value() % 2 == 0) ? infillColor :
             _batteryLevel < 2000 ? Graphics.COLOR_RED :
@@ -173,35 +173,35 @@ class PinionDataField extends WatchUi.DataField
 
         // Outline
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(b.x, b.y, bodyWidth, b.h, cornerRadius);
+        dc.fillRoundedRectangle(rect.x, rect.y, bodyWidth, rect.h, cornerRadius);
 
         // Terminal
         dc.setPenWidth(lineWidth);
-        dc.fillRoundedRectangle(b.x, b.y + ((b.h - terminalHeight) * 0.5),
-            b.w, terminalHeight, cornerRadius * 0.5);
+        dc.fillRoundedRectangle(rect.x, rect.y + ((rect.h - terminalHeight) * 0.5),
+            rect.w, terminalHeight, cornerRadius * 0.5);
 
         // Infill
         dc.setColor(infillColor, Graphics.COLOR_TRANSPARENT);
-        dc.fillRectangle(b.x + lineWidth, b.y + lineWidth,
-            bodyWidth - (lineWidth * 2.0), b.h - (lineWidth * 2.0));
+        dc.fillRectangle(rect.x + lineWidth, rect.y + lineWidth,
+            bodyWidth - (lineWidth * 2.0), rect.h - (lineWidth * 2.0));
 
         // Level
         dc.setColor(levelColor, Graphics.COLOR_TRANSPARENT);
-        dc.fillRectangle(b.x + (lineWidth + blockGap), b.y + (lineWidth + blockGap),
+        dc.fillRectangle(rect.x + (lineWidth + blockGap), rect.y + (lineWidth + blockGap),
             levelWidth, levelHeight);
 
         // Gaps
         dc.setColor(infillColor, Graphics.COLOR_TRANSPARENT);
 
         var numGaps = 4;
-        var start = b.x + lineWidth;
+        var start = rect.x + lineWidth;
         var stride = (levelFullWidth + blockGap) / (numGaps + 1);
         for(var i = 0; i < numGaps; i++)
         {
             var x = start + (stride * (i + 1));
 
-            dc.fillRectangle(x, b.y + lineWidth,
-                blockGap, b.h - (lineWidth * 2.0));
+            dc.fillRectangle(x, rect.y + lineWidth,
+                blockGap, rect.h - (lineWidth * 2.0));
         }
     }
 
