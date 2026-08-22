@@ -2,3 +2,7 @@ project.manifest = manifest.xml
 project.typecheck = 3
 base.sourcePath = source
 base.Pinion.annotations = datafield #;useTestInterface
+
+edge530.excludeAnnotations = useNon_xx30Fonts
+edge830.excludeAnnotations = useNon_xx30Fonts
+edge1030.excludeAnnotations = useNon_xx30Fonts
