@@ -205,6 +205,11 @@ class PinionDataField extends WatchUi.DataField
         }
     }
 
+    private function drawConnecting(dc as Graphics.Dc,
+        rect as Rect, color as Graphics.ColorValue) as Void
+    {
+    }
+
     public function onUpdate(dc as Graphics.Dc) as Void
     {
         var backgroundColor = getBackgroundColor();
@@ -213,6 +218,24 @@ class PinionDataField extends WatchUi.DataField
         var w = dc.getWidth() as Lang.Float;
         var h = dc.getHeight() as Lang.Float;
         var aspectRatio = w / h;
+
+        var labelOffset = dc.getFontHeight(_labelFont) as Lang.Float;
+
+        dc.setColor(Graphics.COLOR_TRANSPARENT, backgroundColor);
+        dc.clear();
+        dc.setColor(foregroundColor, Graphics.COLOR_TRANSPARENT);
+
+        dc.drawText(w * 0.5, dc.getFontHeight(_labelFont) * 0.22,
+            _labelFont, _label, Graphics.TEXT_JUSTIFY_CENTER);
+
+        if(!hasData())
+        {
+            var connectingLocation = [0.0, 0.0, 1.0, 1.0];
+            var c = ltrbToScreen(connectingLocation, w, h - labelOffset, labelOffset);
+
+            drawConnecting(dc, c, foregroundColor);
+            return;
+        }
 
         // Force battery display if it's at a very low level
         var showBattery = _showBattery || _batteryLevel <= 500;
@@ -253,18 +276,10 @@ class PinionDataField extends WatchUi.DataField
             }
         }
 
-        var labelOffset = dc.getFontHeight(_labelFont) as Lang.Float;
         var g = ltrbToScreen(gearLocation,         w, h - labelOffset, labelOffset);
         var d = ltrbToScreen(dividerLocation,      w, h - labelOffset, labelOffset);
         var t = ltrbToScreen(batteryTextLocation,  w, h - labelOffset, labelOffset);
         var i = ltrbToScreen(batteryIconLocation,  w, h - labelOffset, labelOffset);
-
-        dc.setColor(Graphics.COLOR_TRANSPARENT, backgroundColor);
-        dc.clear();
-        dc.setColor(foregroundColor, Graphics.COLOR_TRANSPARENT);
-
-        dc.drawText(w * 0.5, dc.getFontHeight(_labelFont) * 0.22,
-            _labelFont, _label, Graphics.TEXT_JUSTIFY_CENTER);
 
         if(_showGear)
         {
