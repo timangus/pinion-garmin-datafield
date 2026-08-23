@@ -220,6 +220,40 @@ class PinionDataField extends WatchUi.DataField
     private function drawConnecting(dc as Graphics.Dc,
         rect as Rect, color as Graphics.ColorValue) as Void
     {
+        var angle = 90;
+        var halfAngle = angle / 2;
+        var minAngle = (450 - halfAngle) % 360;
+        var maxAngle = (450 + halfAngle) % 360;
+
+        var numArcs = 3;
+        var radialLength = rect.h * ((numArcs + 0.5) / (numArcs + 1.0));
+
+        var degreesToRadians = Math.PI / 180.0;
+        var width = Math.cos((90 - halfAngle) * degreesToRadians) * radialLength * 2.0;
+        var scale = rect.w / width;
+
+        if(scale < 1.0)
+        {
+            // It's too wide to fit in the original rect, so scale it down
+            rect = rect.scaled(scale as Lang.Float);
+        }
+
+        var top = rect.y;
+        var bottom = rect.y + rect.h;
+        var lineWidth = (bottom - top) / ((numArcs + 1) * 2);
+
+        dc.setPenWidth(lineWidth);
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+
+        dc.fillCircle(rect.centreX(), bottom - lineWidth, lineWidth);
+
+        for(var i = 0; i < numArcs; i++)
+        {
+            var offset = (lineWidth * 0.5) + ((i + 1) * (lineWidth * 2.0));
+
+            dc.drawArc(rect.centreX(), bottom - lineWidth, offset,
+                Graphics.ARC_COUNTER_CLOCKWISE, minAngle, maxAngle);
+        }
     }
 
     public function onUpdate(dc as Graphics.Dc) as Void
@@ -247,7 +281,8 @@ class PinionDataField extends WatchUi.DataField
             var connectingLocation = [0.0, 0.0, 1.0, 1.0];
             var c = ltrbToScreen(connectingLocation, w, h - labelOffset, labelOffset);
 
-            drawConnecting(dc, c, foregroundColor);
+            drawConnecting(dc, c.scaledToAspectRatio(1.0).scaled(0.9), foregroundColor);
+            drawDebugRectangle(dc, c, Graphics.COLOR_RED);
             return;
         }
 
