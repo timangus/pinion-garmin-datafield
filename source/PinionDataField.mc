@@ -247,7 +247,8 @@ class PinionDataField extends WatchUi.DataField
 
         dc.fillCircle(rect.centreX(), bottom - lineWidth, lineWidth);
 
-        for(var i = 0; i < numArcs; i++)
+        var maxArcs = (Time.now().value() % numArcs) + 1;
+        for(var i = 0; i < maxArcs; i++)
         {
             var offset = (lineWidth * 0.5) + ((i + 1) * (lineWidth * 2.0));
 
