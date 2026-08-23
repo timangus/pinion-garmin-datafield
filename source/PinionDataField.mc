@@ -24,7 +24,7 @@ class Rect
     public function centreX() as Lang.Float { return x + (w * 0.5); }
     public function centreY() as Lang.Float { return y + (h * 0.5); }
 
-    public function scaled(xf as Lang.Float, yf as Lang.Float) as Rect
+    public function _scaled(xf as Lang.Float, yf as Lang.Float) as Rect
     {
         var sx = centreX() - (w * xf * 0.5);
         var sy = centreY() - (h * yf * 0.5);
@@ -34,17 +34,22 @@ class Rect
         return new Rect(sx, sy, sw, sh);
     }
 
+    public function scaled(f as Lang.Float) as Rect
+    {
+        return _scaled(f, f);
+    }
+
     public function scaledToAspectRatio(ar as Lang.Float) as Rect
     {
         var currentAspectRatio = w / h;
 
         if(currentAspectRatio >= ar)
         {
-            return scaled(ar * h / w, 1.0);
+            return _scaled(ar * h / w, 1.0);
         }
         else
         {
-            return scaled(1.0, w / (ar * h));
+            return _scaled(1.0, w / (ar * h));
         }
     }
 }
@@ -332,7 +337,7 @@ class PinionDataField extends WatchUi.DataField
             dc.drawText(t.centreX(), textY, font, batteryText, Graphics.TEXT_JUSTIFY_CENTER);
             drawDebugRectangle(dc, Graphics.COLOR_GREEN, t);
 
-            drawBattery(dc, i.scaledToAspectRatio(2.5).scaled(0.8, 0.8), foregroundColor);
+            drawBattery(dc, i.scaledToAspectRatio(2.5).scaled(0.8), foregroundColor);
             drawDebugRectangle(dc, Graphics.COLOR_PURPLE, i);
         }
     }
