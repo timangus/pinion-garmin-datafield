@@ -148,7 +148,7 @@ class PinionDataField extends WatchUi.DataField
         return new Rect(left * w, vOffset + (top * h), (right - left) * w, (bottom - top) * h);
     }
 
-    private function drawDebugRectangle(dc as Graphics.Dc, color as Graphics.ColorValue, b as Rect) as Void
+    private function drawDebugRectangle(dc as Graphics.Dc, rect as Rect, color as Graphics.ColorValue) as Void
     {
         if(!DEBUG_RECTANGLES)
         {
@@ -157,8 +157,8 @@ class PinionDataField extends WatchUi.DataField
 
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2.0);
-        dc.drawRectangle(b.x + 1.0, b.y + 1.0, b.w - 2.0, b.h - 2.0);
-        dc.fillCircle(b.centreX(), b.centreY(), 2.0);
+        dc.drawRectangle(rect.x + 1.0, rect.y + 1.0, rect.w - 2.0, rect.h - 2.0);
+        dc.fillCircle(rect.centreX(), rect.centreY(), 2.0);
     }
 
     private function drawBattery(dc as Graphics.Dc,
@@ -300,7 +300,7 @@ class PinionDataField extends WatchUi.DataField
             var textY = g.centreY() - (Graphics.getFontHeight(font) * 0.5);
             dc.setColor(foregroundColor, Graphics.COLOR_TRANSPARENT);
             dc.drawText(g.centreX(), textY, font, gearText, Graphics.TEXT_JUSTIFY_CENTER);
-            drawDebugRectangle(dc, Graphics.COLOR_RED, g);
+            drawDebugRectangle(dc, g, Graphics.COLOR_RED);
         }
 
         if(_showGear && showBattery)
@@ -325,7 +325,7 @@ class PinionDataField extends WatchUi.DataField
                 dc.drawLine(d.centreX() - halfLength, d.centreY(), d.centreX() + halfLength, d.centreY());
             }
 
-            drawDebugRectangle(dc, Graphics.COLOR_PINK, d);
+            drawDebugRectangle(dc, d, Graphics.COLOR_PINK);
         }
 
         if(showBattery)
@@ -335,10 +335,10 @@ class PinionDataField extends WatchUi.DataField
             var textY = t.centreY() - (Graphics.getFontHeight(font) * 0.5);
             dc.setColor(foregroundColor, Graphics.COLOR_TRANSPARENT);
             dc.drawText(t.centreX(), textY, font, batteryText, Graphics.TEXT_JUSTIFY_CENTER);
-            drawDebugRectangle(dc, Graphics.COLOR_GREEN, t);
+            drawDebugRectangle(dc, t, Graphics.COLOR_GREEN);
 
             drawBattery(dc, i.scaledToAspectRatio(2.5).scaled(0.8), foregroundColor);
-            drawDebugRectangle(dc, Graphics.COLOR_PURPLE, i);
+            drawDebugRectangle(dc, i, Graphics.COLOR_PURPLE);
         }
     }
 
