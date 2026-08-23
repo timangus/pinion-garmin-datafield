@@ -233,6 +233,8 @@ class PinionDataField extends WatchUi.DataField
 
         var labelOffset = dc.getFontHeight(_labelFont) as Lang.Float;
 
+        dc.setAntiAlias(true);
+
         dc.setColor(Graphics.COLOR_TRANSPARENT, backgroundColor);
         dc.clear();
         dc.setColor(foregroundColor, Graphics.COLOR_TRANSPARENT);
