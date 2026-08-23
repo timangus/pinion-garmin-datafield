@@ -36,9 +36,16 @@ class Rect
 
     public function scaledToAspectRatio(ar as Lang.Float) as Rect
     {
-        var desiredHeight = w / ar;
+        var currentAspectRatio = w / h;
 
-        return scaled(1.0, desiredHeight / h);
+        if(currentAspectRatio >= ar)
+        {
+            return scaled(ar * h / w, 1.0);
+        }
+        else
+        {
+            return scaled(1.0, w / (ar * h));
+        }
     }
 }
 
