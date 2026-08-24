@@ -78,6 +78,11 @@ class App extends Application.AppBase
             setState(CONNECTING);
         }
 
+        if(state != CONNECTED)
+        {
+            _pinionDataField.reset();
+        }
+
         switch(_state)
         {
         case SCANNING:
@@ -107,11 +112,6 @@ class App extends Application.AppBase
         case STOPPING:
             // NO-OP
             break;
-        }
-
-        if(state != CONNECTED)
-        {
-            _pinionDataField.reset();
         }
     }
 
