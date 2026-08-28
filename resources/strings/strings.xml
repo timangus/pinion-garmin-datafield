@@ -1,16 +1,22 @@
 <strings>
     <string id="AppName">Smart.Shift DataField</string>
-    <string id="Settings">Smart.Shift DataField Settings</string>
     <string id="DataFieldLabel">PINION</string>
+
+
+    <string id="SettingsTitle">Smart.Shift DataField Settings</string>
 
     <string id="Unpair">Unpair from Gearbox</string>
     <string id="Disconnected">Disconnected</string>
+
     <string id="ShowGear">Show Gear</string>
     <string id="ShowBattery">Show Battery</string>
-
-    <string id="PreSelect">Pre.Select</string>
-    <string id="StartSelect">Start.Select</string>
-
     <string id="Enabled">Enabled</string>
     <string id="Disabled">Disabled</string>
+
+    <string id="TapActionTitle">Select Smart.Shift Tap Action</string>
+
+    <string id="TapAction">Tap Action</string>
+    <string id="NoAction">None</string>
+    <string id="TogglePreSelect">Toggle Pre.Select</string>
+    <string id="ToggleStartSelect">Toggle Start.Select</string>
 </strings>

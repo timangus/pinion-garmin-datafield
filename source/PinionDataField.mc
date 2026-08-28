@@ -54,6 +54,23 @@ class Rect
     }
 }
 
+class PinionDataFieldInputDelegate extends WatchUi.InputDelegate
+{
+    private var _view as PinionDataField;
+
+    public function initialize(pinionDataField as PinionDataField)
+    {
+        InputDelegate.initialize();
+
+        _view = pinionDataField;
+    }
+
+    public function onTap(clickEvent as WatchUi.ClickEvent) as Lang.Boolean
+    {
+        return _view.onTap(clickEvent);
+    }
+}
+
 class PinionDataField extends WatchUi.DataField
 {
     private const DEBUG_RECTANGLES = false;
@@ -75,6 +92,7 @@ class PinionDataField extends WatchUi.DataField
 
     private var _currentGear as Lang.Number = 0;
     private var _batteryLevel as Lang.Number = 0;
+    private var _toggleState as Lang.Boolean = false;
 
     private var _labelFont as Graphics.FontType = Graphics.FONT_SMALL;
 
@@ -259,8 +277,9 @@ class PinionDataField extends WatchUi.DataField
 
     public function onUpdate(dc as Graphics.Dc) as Void
     {
-        var backgroundColor = getBackgroundColor();
-        var foregroundColor = (backgroundColor == Graphics.COLOR_BLACK) ?
+        var backgroundColor = _toggleState ?
+            Graphics.COLOR_DK_GREEN : getBackgroundColor();
+        var foregroundColor = (backgroundColor != Graphics.COLOR_WHITE) ?
             Graphics.COLOR_WHITE : Graphics.COLOR_BLACK;
         var w = dc.getWidth() as Lang.Float;
         var h = dc.getHeight() as Lang.Float;
@@ -380,6 +399,17 @@ class PinionDataField extends WatchUi.DataField
         }
     }
 
+    public function onTap(clickEvent as WatchUi.ClickEvent) as Lang.Boolean
+    {
+        if(_app.tapActionSetting() != App.NO_ACTION)
+        {
+            // Toggle the state immediately so the user gets feedback asap
+            _toggleState = !_toggleState;
+        }
+
+        return _app.setTapActionState(_toggleState);
+    }
+
     public function setCurrentGear(currentGear as Lang.Number) as Void
     {
         _currentGear = currentGear;
@@ -390,10 +420,16 @@ class PinionDataField extends WatchUi.DataField
         _batteryLevel = batteryLevel;
     }
 
+    public function setToggleState(toggleState as Lang.Boolean) as Void
+    {
+        _toggleState = toggleState;
+    }
+
     public function reset() as Void
     {
         _currentGear = 0;
         _batteryLevel = 0;
+        _toggleState = false;
     }
 
     public function hasData() as Lang.Boolean

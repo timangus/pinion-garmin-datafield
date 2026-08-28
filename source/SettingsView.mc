@@ -1,6 +1,7 @@
 using Toybox.Application;
-using Toybox.WatchUi;
 using Toybox.Lang;
+using Toybox.System;
+using Toybox.WatchUi;
 
 class SettingsViewInputDelegate extends WatchUi.Menu2InputDelegate
 {
@@ -26,13 +27,14 @@ class SettingsViewInputDelegate extends WatchUi.Menu2InputDelegate
 class SettingsView extends WatchUi.Menu2
 {
     private var _app as App;
+    private var _tapActionMenuItem as WatchUi.MenuItem?;
 
     public function initialize(app as App)
     {
         _app = app;
 
         WatchUi.Menu2.initialize(null);
-        setTitle(Rez.Strings.Settings);
+        setTitle(Rez.Strings.SettingsTitle);
 
         var deviceSerialNumber = Application.Storage.getValue(_app.activityKey("deviceSerialNumber"));
         if(deviceSerialNumber != null)
@@ -52,6 +54,13 @@ class SettingsView extends WatchUi.Menu2
         addItem(new WatchUi.ToggleMenuItem(Rez.Strings.ShowBattery,
             {:enabled => Rez.Strings.Enabled, :disabled => Rez.Strings.Disabled},
             "show.battery", showBattery, {:alignment => WatchUi.MenuItem.MENU_ITEM_LABEL_ALIGN_RIGHT}));
+
+        if(System.getDeviceSettings().isTouchScreen)
+        {
+            _tapActionMenuItem = new WatchUi.MenuItem(Rez.Strings.TapAction, "", "tap.action", null);
+            addItem(_tapActionMenuItem);
+            refreshTapActionMenuItemText();
+        }
     }
 
     public function onSelect(item as WatchUi.MenuItem) as Void
@@ -85,6 +94,13 @@ class SettingsView extends WatchUi.Menu2
             var unpairMenuItem = getItem(findItemById("unpair")) as WatchUi.MenuItem;
             unpairMenuItem.setSubLabel(Rez.Strings.Disconnected);
         }
+        else if(id.equals("tap.action"))
+        {
+            var tapActionView = new TapActionView(_app, self);
+            var tapActionViewInputDelegate = new TapActionViewInputDelegate(tapActionView);
+
+            WatchUi.pushView(tapActionView, tapActionViewInputDelegate, WatchUi.SLIDE_IMMEDIATE);
+        }
 
         Application.Storage.setValue(_app.activityKey("showGear"), showGearToggleMenuItem.isEnabled());
         Application.Storage.setValue(_app.activityKey("showBattery"), showBatteryToggleMenuItem.isEnabled());
@@ -93,5 +109,23 @@ class SettingsView extends WatchUi.Menu2
     public function onBack() as Void
     {
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
+
+    public function refreshTapActionMenuItemText() as Void
+    {
+        var tapActionString = "";
+
+        switch(_app.tapActionSetting())
+        {
+            default:
+            case App.NO_ACTION:             tapActionString = Rez.Strings.NoAction;             break;
+            case App.TOGGLE_PRE_SELECT:     tapActionString = Rez.Strings.TogglePreSelect;      break;
+            case App.TOGGLE_START_SELECT:   tapActionString = Rez.Strings.ToggleStartSelect;    break;
+        }
+
+        if(_tapActionMenuItem != null)
+        {
+            _tapActionMenuItem.setSubLabel(tapActionString);
+        }
     }
 }

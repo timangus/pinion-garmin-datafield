@@ -17,6 +17,13 @@ class App extends Application.AppBase
         STOPPING,
     }
 
+    enum TapAction
+    {
+        NO_ACTION,
+        TOGGLE_PRE_SELECT,
+        TOGGLE_START_SELECT
+    }
+
     private var _state as State = STARTING;
 
     private var _pinionInterface as Pinion.AbstractInterface?;
@@ -24,6 +31,8 @@ class App extends Application.AppBase
     private var _deviceHandle as Pinion.DeviceHandle? = null;
 
     private var _pinionDataField as PinionDataField = new PinionDataField(self);
+    private var _pinionDataFieldInputDelegate as PinionDataFieldInputDelegate =
+        new PinionDataFieldInputDelegate(_pinionDataField);
 
     private var _retryTimer as Timer.Timer or Pinion.DataFieldTimer = Pinion.createTimer();
     private var _batteryLevelTimer as Timer.Timer or Pinion.DataFieldTimer = Pinion.createTimer();
@@ -156,7 +165,7 @@ class App extends Application.AppBase
 
     public function getInitialView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates]
     {
-        return [_pinionDataField];
+        return [_pinionDataField, _pinionDataFieldInputDelegate];
     }
 
     public function getSettingsView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] or Null
@@ -177,6 +186,41 @@ class App extends Application.AppBase
         Debug.log("onScanStateChanged(" + scanState + ")");
     }
 
+    public function tapActionSetting() as TapAction
+    {
+        if(!System.getDeviceSettings().isTouchScreen)
+        {
+            return App.NO_ACTION;
+        }
+
+        var _tapActionSetting = Application.Storage.getValue(activityKey("tapAction"));
+        return _tapActionSetting != null ? _tapActionSetting as TapAction : App.NO_ACTION;
+    }
+
+    public function syncTapActionState() as Void
+    {
+        if(_pinionInterface == null || !_pinionInterface.isConnected())
+        {
+            return;
+        }
+
+        switch(tapActionSetting())
+        {
+            default:
+            case App.NO_ACTION: _pinionDataField.setToggleState(false); break;
+
+            case App.TOGGLE_PRE_SELECT:
+                readParameter(Pinion.PRE_SELECT);
+                writeParameter(Pinion.START_SELECT, 0);
+                break;
+
+            case App.TOGGLE_START_SELECT:
+                readParameter(Pinion.START_SELECT);
+                writeParameter(Pinion.PRE_SELECT, 0);
+                break;
+        }
+    }
+
     public function onConnected(device as Ble.Device) as Void
     {
         Debug.log("PinionDelegate.onConnected");
@@ -185,6 +229,8 @@ class App extends Application.AppBase
         readParameter(Pinion.CURRENT_GEAR);
         readParameter(Pinion.BATTERY_LEVEL);
         _batteryLevelTimer.start(method(:_readBatteryLevel), 60000, true);
+
+        syncTapActionState();
     }
 
     public function _attemptReconnection() as Void
@@ -243,6 +289,24 @@ class App extends Application.AppBase
         _pinionDataField.setCurrentGear(currentGear);
     }
 
+    private function setToggleStateFromParameter(parameter as Pinion.ParameterType,
+        value as Lang.Number) as Void
+    {
+        var tas = tapActionSetting();
+        var setState = false;
+        switch(parameter)
+        {
+            case Pinion.PRE_SELECT:     setState = tas == App.TOGGLE_PRE_SELECT; break;
+            case Pinion.START_SELECT:   setState = tas == App.TOGGLE_START_SELECT; break;
+            default: break;
+        }
+
+        if(setState)
+        {
+            _pinionDataField.setToggleState(value != 0 ? true : false);
+        }
+    }
+
     public function onParameterRead(parameter as Pinion.ParameterType, value as Lang.Number) as Void
     {
         Debug.log("onParameterRead(" + Pinion.stringForParameter(parameter) + ", " + value + ")");
@@ -253,11 +317,17 @@ class App extends Application.AppBase
             case Pinion.BATTERY_LEVEL:  _pinionDataField.setBatteryLevel(value); break;
             default: break;
         }
+
+        setToggleStateFromParameter(parameter, value);
     }
 
     public function onParameterWrite(parameter as Pinion.ParameterType, value as Lang.Number) as Void
     {
         Debug.log("onParameterWrite(" + Pinion.stringForParameter(parameter) + ", " + value + ")");
+
+        // In theory this isn't necessary, as the state should already
+        // be in sync, but it won't hurt if things go awry
+        setToggleStateFromParameter(parameter, value);
     }
 
     public function selectDevice(deviceHandle as Pinion.DeviceHandle) as Void
@@ -323,6 +393,26 @@ class App extends Application.AppBase
         }
 
         updateState();
+    }
+
+    public function setTapActionState(value as Lang.Boolean) as Lang.Boolean
+    {
+        if(_pinionInterface == null || !_pinionInterface.isConnected())
+        {
+            return false;
+        }
+
+        var n = value ? 1 : 0;
+
+        switch(tapActionSetting())
+        {
+            default:
+            case App.NO_ACTION:             return false;
+            case App.TOGGLE_PRE_SELECT:     writeParameter(Pinion.PRE_SELECT, n);   break;
+            case App.TOGGLE_START_SELECT:   writeParameter(Pinion.START_SELECT, n); break;
+        }
+
+        return true;
     }
 
     public function update() as Void
