@@ -132,6 +132,12 @@ class App extends Application.AppBase
         updateState();
     }
 
+    private function onDisconnectOrStop() as Void
+    {
+        _batteryLevelTimer.stop();
+        _pinionDataField.reset();
+    }
+
     public function onStop(state as Lang.Dictionary?) as Void
     {
         if(_state == STOPPING)
@@ -141,7 +147,7 @@ class App extends Application.AppBase
         }
 
         setState(STOPPING);
-        _batteryLevelTimer.stop();
+        onDisconnectOrStop();
         pinionInterface().disconnect();
         store();
 
@@ -191,7 +197,7 @@ class App extends Application.AppBase
     {
         Debug.log("PinionDelegate.onDisconnected");
 
-        _batteryLevelTimer.stop();
+        onDisconnectOrStop();
 
         if(_state != STOPPING)
         {
@@ -312,7 +318,7 @@ class App extends Application.AppBase
 
         if(_state == CONNECTED)
         {
-            _batteryLevelTimer.stop();
+            onDisconnectOrStop();
             pinionInterface().disconnect();
         }
 
