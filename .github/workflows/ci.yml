@@ -70,7 +70,7 @@ jobs:
     steps:
     - uses: actions/download-artifact@v4
     - name: Publish Release Artifacts
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ github.ref }}
         name: Release ${{ needs.check-is-release.outputs.version }}
